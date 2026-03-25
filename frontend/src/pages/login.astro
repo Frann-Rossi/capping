@@ -1,0 +1,80 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Iniciar Sesión">
+	<div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+		<div class="text-center space-y-2">
+			<h1 class="text-3xl font-bold tracking-tight text-gray-900">Bienvenido</h1>
+			<p class="text-gray-500">Ingresa tu email para recibir un código de acceso</p>
+		</div>
+
+		<form id="login-form" class="space-y-4">
+			<div>
+				<label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+				<input 
+					type="email" 
+					id="email" 
+					required 
+					placeholder="tu@email.com"
+					class="input-field"
+				/>
+			</div>
+
+			<button type="submit" class="btn btn-primary">
+				Enviar Código
+			</button>
+		</form>
+
+		<div id="message" class="hidden p-4 rounded-xl text-center text-sm"></div>
+	</div>
+
+	<script>
+		const form = document.getElementById('login-form');
+		const message = document.getElementById('message');
+		const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:1337';
+
+		form?.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const email = (document.getElementById('email') as HTMLInputElement).value;
+			
+			const button = form.querySelector('button');
+			if (button) {
+				button.disabled = true;
+				button.innerText = 'Enviando...';
+			}
+
+			try {
+				const res = await fetch(`${API_URL}/api/otp-code/send`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email })
+				});
+
+				const data = await res.json();
+
+				if (res.ok) {
+					localStorage.setItem('pending_email', email);
+					window.location.href = '/verify';
+				} else {
+					message?.classList.remove('hidden', 'bg-green-50', 'text-green-700');
+					message?.classList.add('bg-red-50', 'text-red-700');
+					message!.innerText = data.error?.message || 'Error al enviar el código';
+					if (button) {
+						button.disabled = false;
+						button.innerText = 'Enviar Código';
+					}
+				}
+			} catch (err) {
+				console.error(err);
+				message?.classList.remove('hidden');
+				message?.classList.add('bg-red-50', 'text-red-700');
+				message!.innerText = 'Error de conexión con el servidor';
+				if (button) {
+					button.disabled = false;
+					button.innerText = 'Enviar Código';
+				}
+			}
+		});
+	</script>
+</Layout>

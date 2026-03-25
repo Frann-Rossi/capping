@@ -1,0 +1,40 @@
+Usage: create-strapi-app [directory] [options]
+
+create a new application
+
+Options:
+  -V, --version                       output the version number
+  --quickstart                        Quickstart app creation (deprecated)
+  --no-run                            Do not start the application after it is
+                                      created.
+  --ts, --typescript                  Initialize the project with TypeScript
+                                      (default)
+  --js, --javascript                  Initialize the project with Javascript
+  --use-npm                           Use npm as the project package manager
+  --use-yarn                          Use yarn as the project package manager
+  --use-pnpm                          Use pnpm as the project package manager
+  --install                           Install dependencies
+  --no-install                        Do not install dependencies
+  --skip-cloud                        Skip cloud login and project creation
+  --example                           Use an example app
+  --no-example                        Do not use an example app
+  --git-init                          Initialize a git repository
+  --no-git-init                       Do no initialize a git repository
+  --enable-ab-tests                   Enable anonymous A/B testing
+  --no-enable-ab-tests                Disable anonymous A/B testing
+  --non-interactive                   Skip all interactive prompts and use
+                                      defaults
+  --dbclient <dbclient>               Database client
+  --dbhost <dbhost>                   Database host
+  --dbport <dbport>                   Database port
+  --dbname <dbname>                   Database name
+  --dbusername <dbusername>           Database username
+  --dbpassword <dbpassword>           Database password
+  --dbssl <dbssl>                     Database SSL
+  --dbfile <dbfile>                   Database file path for sqlite
+  --skip-db                           Skip database configuration
+  --template <template>               Specify a Strapi template
+  --template-branch <templateBranch>  Specify a branch for the template
+  --template-path <templatePath>      Specify a path to the template inside the
+                                      repository
+  -h, --help                          display help for command

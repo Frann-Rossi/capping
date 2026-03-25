@@ -1,0 +1,53 @@
+{
+  "kind": "collectionType",
+  "collectionName": "turnos",
+  "info": {
+    "singularName": "turno",
+    "pluralName": "turnos",
+    "displayName": "Turno",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "fecha_hora": {
+      "type": "datetime",
+      "required": true
+    },
+    "estado": {
+      "type": "enumeration",
+      "enum": [
+        "disponible",
+        "pendiente_pago",
+        "confirmado",
+        "cancelado",
+        "expirado"
+      ],
+      "default": "disponible",
+      "required": true
+    },
+    "preference_id": {
+      "type": "string"
+    },
+    "payment_id": {
+      "type": "string"
+    },
+    "monto_pago": {
+      "type": "decimal"
+    },
+    "total_price": {
+      "type": "decimal"
+    },
+    "bloqueado_hasta": {
+      "type": "datetime"
+    },
+    "usuario": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "turnos"
+    }
+  }
+}

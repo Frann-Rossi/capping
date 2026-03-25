@@ -1,0 +1,159 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Reservar Turno">
+	<div class="space-y-8 animate-in fade-in duration-700">
+		<header class="flex justify-between items-center">
+			<div>
+				<h1 class="text-2xl font-bold text-gray-900">Reserva tu turno</h1>
+				<p class="text-sm text-gray-500" id="user-display">Cargando...</p>
+			</div>
+			<button id="logout-btn" class="text-sm font-semibold text-red-500 hover:text-red-600">
+				Salir
+			</button>
+		</header>
+
+		<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-6">
+			<!-- Calendario Simple -->
+			<div class="space-y-4">
+				<h2 class="font-semibold text-gray-700">1. Selecciona el día</h2>
+				<div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-400 mb-2">
+					{['D', 'L', 'M', 'X', 'J', 'V', 'S'].map(d => <div>{d}</div>)}
+				</div>
+				<div id="calendar-grid" class="grid grid-cols-7 gap-2">
+					<!-- Generado por JS -->
+				</div>
+			</div>
+
+			<hr class="border-gray-50" />
+
+			<!-- Slots selection -->
+			<div id="slots-section" class="space-y-4 hidden">
+				<h2 class="font-semibold text-gray-700">2. Selecciona el horario</h2>
+				<div id="slots-grid" class="grid grid-cols-3 gap-3">
+					<!-- Generado por JS -->
+				</div>
+			</div>
+		</div>
+
+		<!-- Payment Footer -->
+		<div id="payment-footer" class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 hidden">
+			<div class="max-w-md mx-auto space-y-4">
+				<div class="flex justify-between items-center">
+					<span class="text-gray-500">Total a pagar:</span>
+					<span class="text-xl font-bold">$3.000</span>
+				</div>
+				<div class="flex gap-2">
+					<button id="pay-half" class="btn bg-blue-100 text-blue-700 hover:bg-blue-200">
+						Pagar 50%
+					</button>
+					<button id="pay-full" class="btn btn-primary">
+						Reservar Ahora
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:1337';
+		const userStr = localStorage.getItem('user');
+		const user = userStr ? JSON.parse(userStr) : null;
+		const jwt = localStorage.getItem('jwt');
+
+		if (!jwt) {
+			window.location.href = '/login';
+		}
+
+		const userDisplay = document.getElementById('user-display');
+		if (userDisplay && user) userDisplay.innerText = user.email;
+
+		document.getElementById('logout-btn')?.addEventListener('click', () => {
+			localStorage.clear();
+			window.location.href = '/login';
+		});
+
+		// Logic for Calendar & Slots
+		let selectedDate: string | null = null;
+		let selectedSlot: string | null = null;
+
+		function initCalendar() {
+			const grid = document.getElementById('calendar-grid');
+			const today = new Date();
+			
+			for (let i = 0; i < 15; i++) {
+				const day = new Date(today);
+				day.setDate(today.getDate() + i);
+				
+				const btn = document.createElement('button');
+				btn.className = "h-10 w-10 flex items-center justify-center rounded-xl text-sm transition-all border border-transparent hover:border-blue-200";
+				btn.innerText = day.getDate().toString();
+				
+				if (i === 0) btn.classList.add('bg-blue-50', 'text-blue-600', 'font-bold');
+
+				btn.onclick = () => {
+					document.querySelectorAll('#calendar-grid button').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+					btn.classList.add('bg-blue-600', 'text-white');
+					selectedDate = day.toISOString().split('T')[0];
+					fetchSlots(selectedDate);
+				};
+				grid?.appendChild(btn);
+			}
+		}
+
+		async function fetchSlots(date: string) {
+			const res = await fetch(`${API_URL}/api/turnos/disponibles?fecha=${date}`);
+			const { slots } = await res.json();
+			
+			const slotsSection = document.getElementById('slots-section');
+			const grid = document.getElementById('slots-grid');
+			
+			slotsSection?.classList.remove('hidden');
+			if (grid) grid.innerHTML = '';
+			
+			slots.forEach((s: string) => {
+				const time = s.split('T')[1].substring(0, 5);
+				const btn = document.createElement('button');
+				btn.className = "py-3 border border-gray-100 rounded-xl text-sm font-medium hover:border-blue-500 hover:text-blue-600 transition-all";
+				btn.innerText = time;
+				
+				btn.onclick = () => {
+					document.querySelectorAll('#slots-grid button').forEach(b => b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'));
+					btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+					selectedSlot = s;
+					document.getElementById('payment-footer')?.classList.remove('hidden');
+				};
+				grid?.appendChild(btn);
+			});
+		}
+
+		async function handlePayment(tipo: 'parcial' | 'total') {
+			if (!selectedSlot) return;
+			
+			const res = await fetch(`${API_URL}/api/turnos/reservar`, {
+				method: 'POST',
+				headers: { 
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${jwt}`
+				},
+				body: JSON.stringify({ 
+					fecha_hora: selectedSlot,
+					monto_tipo: tipo
+				})
+			});
+
+			const data = await res.json();
+			if (data.checkout_url) {
+				window.location.href = data.checkout_url;
+			} else {
+				alert(data.error?.message || 'Error al procesar la reserva');
+			}
+		}
+
+		document.getElementById('pay-half')?.addEventListener('click', () => handlePayment('parcial'));
+		document.getElementById('pay-full')?.addEventListener('click', () => handlePayment('total'));
+
+		initCalendar();
+	</script>
+</Layout>

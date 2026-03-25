@@ -1,0 +1,96 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Verificar Código">
+	<div class="space-y-8">
+		<div class="text-center space-y-2">
+			<h1 class="text-3xl font-bold tracking-tight text-gray-900">Verifica tu email</h1>
+			<p class="text-gray-500">Hemos enviado un código de 6 dígitos</p>
+		</div>
+
+		<form id="verify-form" class="space-y-6">
+			<div class="flex justify-between gap-2" id="otp-inputs">
+				{[...Array(6)].map((_, i) => (
+					<input
+						type="text"
+						inputmode="numeric"
+						pattern="[0-9]*"
+						maxlength="1"
+						class="w-12 h-14 text-center text-2xl font-bold bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+						data-index={i}
+					/>
+				))}
+			</div>
+
+			<button type="submit" class="btn btn-primary">
+				Verificar y Continuar
+			</button>
+		</form>
+
+		<p class="text-center text-sm text-gray-500">
+			¿No recibiste el código? <a href="/login" class="text-blue-600 font-semibold">Reintentar</a>
+		</p>
+
+		<div id="message" class="hidden p-4 rounded-xl text-center text-sm"></div>
+	</div>
+
+	<script>
+		const form = document.getElementById('verify-form');
+		const inputs = document.querySelectorAll('#otp-inputs input') as NodeListOf<HTMLInputElement>;
+		const message = document.getElementById('message');
+		const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:1337';
+
+		// Auto-focus logic
+		inputs.forEach((input, i) => {
+			input.addEventListener('input', (e) => {
+				const val = (e.target as HTMLInputElement).value;
+				if (val && i < inputs.length - 1) {
+					inputs[i + 1].focus();
+				}
+			});
+
+			input.addEventListener('keydown', (e) => {
+				if (e.key === 'Backspace' && !input.value && i > 0) {
+					inputs[i - 1].focus();
+				}
+			});
+		});
+
+		form?.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const email = localStorage.getItem('pending_email');
+			const code = Array.from(inputs).map(i => i.value).join('');
+
+			if (!email || code.length < 6) return;
+
+			const button = form.querySelector('button');
+			if (button) button.disabled = true;
+
+			try {
+				const res = await fetch(`${API_URL}/api/otp-code/verify`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, code })
+				});
+
+				const data = await res.json();
+
+				if (res.ok) {
+					localStorage.setItem('jwt', data.jwt);
+					localStorage.setItem('user', JSON.stringify(data.user));
+					localStorage.removeItem('pending_email');
+					window.location.href = '/';
+				} else {
+					message?.classList.remove('hidden');
+					message?.classList.add('bg-red-50', 'text-red-700');
+					message!.innerText = data.error?.message || 'Código inválido';
+					if (button) button.disabled = false;
+				}
+			} catch (err) {
+				console.error(err);
+				if (button) button.disabled = false;
+			}
+		});
+	</script>
+</Layout>
