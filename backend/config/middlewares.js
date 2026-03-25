@@ -6,10 +6,7 @@ module.exports = [
   {
     name: 'strapi::cors',
     config: {
-      origin: [
-        process.env.FRONTEND_URL || 'http://localhost:4321',
-        'https://capping-frontend.vercel.app' // Puedes cambiar esto por tu URL real de Vercel
-      ],
+      origin: ['*'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
       keepHeaderOnError: true,
